@@ -35,6 +35,14 @@ protected:
     Dim::myHeading = "Elasticity solver";
   }
 
+  //! \brief This constructor sets the number of solution fields for each basis.
+  SIMElasticityWrap(const std::vector<unsigned char>& fields)
+  {
+    Dim::nf = fields;
+    Dim::msgLevel = 1;
+    Dim::myHeading = "Elasticity solver";
+  }
+
 public:
   //! \brief Empty destructor.
   virtual ~SIMElasticityWrap() {}
