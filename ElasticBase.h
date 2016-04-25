@@ -19,12 +19,17 @@
 #include "BDF.h"
 
 
+class PoroFracture;
+
+
 /*!
   \brief Base class representing the FEM integrand of elasticity problems.
 */
 
 class ElasticBase : public IntegrandBase
 {
+  friend class PoroFracture;
+
 protected:
   //! \brief The default constructor is protected to allow sub-classes only.
   ElasticBase();
