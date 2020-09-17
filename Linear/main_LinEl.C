@@ -138,6 +138,7 @@ int main (int argc, char** argv)
   bool dumpNodeMap = false;
   char* infile = nullptr;
   char* supid = nullptr;
+  bool ignoreSol = false;
   Elasticity::wantStrain = false;
   Elasticity::wantPrincipalStress = true;
   SIMargsBase args("elasticity");
@@ -242,6 +243,8 @@ int main (int argc, char** argv)
       dynSol = 's';
     else if (!strcmp(argv[i],"-dumpModes"))
       dumpModes = true;
+    else if (!strcmp(argv[i],"-ignoresol"))
+      ignoreSol = true;
     else if (!infile)
     {
       infile = argv[i];
@@ -371,9 +374,9 @@ int main (int argc, char** argv)
       model = new SIMLinElModal<SIM3D>(modes,checkRHS);
   }
   else if (args.dim == 2)
-    model = new SIMLinEl2D(supid, checkRHS, dualSol || args.adap < 0);
+    model = new SIMLinEl2D(supid, checkRHS, dualSol || args.adap < 0, ignoreSol);
   else
-    model = new SIMLinEl3D(supid, checkRHS, dualSol || args.adap < 0);
+    model = new SIMLinEl3D(supid, checkRHS, dualSol || args.adap < 0, ignoreSol);
 
   AdaptiveSIM* aSim = nullptr;
   if (!theSim)

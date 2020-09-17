@@ -20,6 +20,7 @@
 #include "AlgEqSystem.h"
 #include "SIM2D.h"
 #include "SIM3D.h"
+#include "SAM.h"
 
 
 /*!
@@ -33,11 +34,12 @@ public:
   //! \param[in] sid Id of superelement subjected to static condensation
   //! \param[in] chkRHS If \e true, ensure the model is in a right-hand system
   //! \param[in] ds If \e true, also solve the dual problem
-  SIMLinEl(const char* sid, bool chkRHS, bool ds) : SIMElasticity<Dim>(chkRHS)
+  SIMLinEl(const char* sid, bool chkRHS, bool ds, bool is = false) : SIMElasticity<Dim>(chkRHS), ignoreSol(is)
   {
     if (sid) supSC = sid;
     dualS = ds;
   }
+
   //! \brief Constructor for coupled multi-dimensional simulators.
   //! \param[in] head Header identifying this sub-simulator.
   //! \param[in] chkRHS If \e true, ensure the model is in a right-hand system
@@ -45,6 +47,7 @@ public:
   {
     Dim::myHeading = head;
     dualS = false;
+    ignoreSol = false;
   }
 
   //! \brief Empty destructor.
@@ -65,9 +68,14 @@ public:
   virtual bool solveSystem(Vector& solution, int printSol, double* rCond,
                            const char* compName, bool newLHS, size_t idxRHS)
   {
-    if (!this->Dim::solveSystem(solution,printSol,rCond,compName,newLHS,idxRHS))
+    if (ignoreSol) {
+      this->SIMbase::dumpEqSys();
+      solution.resize(this->mySam->getNoEquations());
+    }
+    else if (!this->Dim::solveSystem(solution, printSol, rCond, compName,
+                                     newLHS, idxRHS))
       return false;
-    else if (idxRHS > 0 || !this->haveBoundaryReactions())
+    if (idxRHS > 0 || !this->haveBoundaryReactions())
       return true;
 
     LinearElasticity* prob = dynamic_cast<LinearElasticity*>(Dim::myProblem);
@@ -335,6 +343,8 @@ public:
 
 private:
   bool dualS; //!< If \e true, also solve the dual problem
+
+  bool ignoreSol;
 
   Vector myReact; //!< Nodal reaction forces
 
