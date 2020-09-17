@@ -19,6 +19,7 @@
 #include "ReactionsOnly.h"
 #include "SIM2D.h"
 #include "SIM3D.h"
+#include "SAM.h"
 
 
 /*!
@@ -31,7 +32,7 @@ public:
   //! \brief The constructor forwards to the parent class constructor.
   //! \param[in] checkRHS If \e true, ensure the model is in a right-hand system
   //! \param[in] ds If \e true, also solve the dual problem
-  SIMLinEl(bool checkRHS, bool ds) : SIMElasticity<Dim>(checkRHS), dualS(ds) {}
+  SIMLinEl(bool checkRHS, bool ds, bool is = false) : SIMElasticity<Dim>(checkRHS), dualS(ds), ignoreSol(is) {}
   //! \brief Empty destructor.
   virtual ~SIMLinEl() {}
 
@@ -50,9 +51,14 @@ public:
   virtual bool solveSystem(Vector& solution, int printSol, double* rCond,
                            const char* compName, bool newLHS, size_t idxRHS)
   {
-    if (!this->Dim::solveSystem(solution,printSol,rCond,compName,newLHS,idxRHS))
+    if (ignoreSol) {
+      this->SIMbase::dumpEqSys();
+      solution.resize(this->mySam->getNoEquations());
+    }
+    else if (!this->Dim::solveSystem(solution, printSol, rCond, compName,
+                                     newLHS, idxRHS))
       return false;
-    else if (idxRHS > 0 || !this->haveBoundaryReactions())
+    if (idxRHS > 0 || !this->haveBoundaryReactions())
       return true;
 
     LinearElasticity* prob = dynamic_cast<LinearElasticity*>(Dim::myProblem);
@@ -188,6 +194,8 @@ public:
 
 private:
   bool dualS; //!< If \e true, also solve the dual problem
+
+  bool ignoreSol;
 
   Vector myReact; //!< Nodal reaction forces
 };

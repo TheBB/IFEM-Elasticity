@@ -133,6 +133,8 @@ int main (int argc, char** argv)
   char dynSol = false;
   bool dumpModes = false;
   char* infile = nullptr;
+  bool ignoreSol = false;
+  bool rhsOnly = false;
   Elasticity::wantStrain = false;
   Elasticity::wantPrincipalStress = true;
   SIMargsBase args("elasticity");
@@ -219,6 +221,10 @@ int main (int argc, char** argv)
       dynSol = 's';
     else if (!strcmp(argv[i],"-dumpModes"))
       dumpModes = true;
+    else if (!strcmp(argv[i],"-ignoresol"))
+      ignoreSol = true;
+    else if (!strcmp(argv[i],"-rhsonly"))
+      rhsOnly = true;
     else if (!infile)
     {
       infile = argv[i];
@@ -231,6 +237,9 @@ int main (int argc, char** argv)
     }
     else
       std::cerr <<"  ** Unknown option ignored: "<< argv[i] << std::endl;
+
+  if (rhsOnly)
+    ignoreSol = true;
 
   if (!infile)
   {
@@ -295,9 +304,9 @@ int main (int argc, char** argv)
       model = new SIMLinElModal<SIM3D>(modes,checkRHS);
   }
   else if (args.dim == 2)
-    model = new SIMLinEl2D(checkRHS, dualSol || args.adap < 0);
+    model = new SIMLinEl2D(checkRHS, dualSol || args.adap < 0, ignoreSol);
   else
-    model = new SIMLinEl3D(checkRHS, dualSol || args.adap < 0);
+    model = new SIMLinEl3D(checkRHS, dualSol || args.adap < 0, ignoreSol);
 
   SIMadmin* theSim = model;
   AdaptiveSIM* aSim = nullptr;
@@ -400,7 +409,7 @@ int main (int argc, char** argv)
                                             model->getProcessAdm()));
     if (statSol)
     {
-      exporter->registerField("u", "solution", DataExporter::SIM, results);
+      exporter->registerField("u", "solution", DataExporter::SIM, results | DataExporter::Results::L2G_NODE);
       if (aSim)
         exporter->setFieldValue("u", model,
                                 &aSim->getSolution(),
@@ -472,7 +481,7 @@ int main (int argc, char** argv)
   case 0:
   case 5:
     // Static solution: Assemble [Km] and {R}
-    model->setMode(SIM::STATIC);
+    model->setMode(rhsOnly ? SIM::RHS_ONLY : SIM::STATIC);
     model->setQuadratureRule(model->opt.nGauss[0],true,true);
     model->initSystem(model->opt.solver,1,displ.size());
     if (!model->assembleSystem())
