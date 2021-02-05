@@ -17,7 +17,7 @@
 
 
 //! Plane strain/stress option for 2D problems.
-bool Elastic::planeStrain = false;
+bool Elastic::planeStrain = true;
 //! Axisymmtry option for 2D problems.
 bool Elastic::axiSymmetry = false;
 //! Option for Gauss point output to VTF
